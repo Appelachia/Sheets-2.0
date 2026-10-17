@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modern Era Investigator | Interactive Sheet + Dice Roller</title>
+<style>
+/* ================================================================
+   MODERN ERA INVESTIGATOR — ONE-FILE CHARACTER SHEET
+   All colors and sizing can be customized here.
+   Works in ordinary browsers / free static hosting; not Toyhouse.
+   ================================================================ */
+:root{
+  --frame:#0b3820; --frame-edge:#041c10; --paper:#fcfcf5;
+  --stripe:#e0e7d3; --ink:#11160d; --line:#66734b;
+  --metal:#d1d2cf; --chosen:#244f31; --chosen-text:#fff;
+  --toolbar:#142b20; --gold:#d9b66a;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#dae0d7;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.editor-bar{max-width:1050px;margin:0 auto 14px;padding:12px;border:2px solid #335b42;
+  border-radius:14px;background:var(--toolbar);color:#f9f9ec;display:flex;flex-wrap:wrap;gap:9px;align-items:center;box-shadow:0 3px 10px #0002}
+.editor-bar strong{letter-spacing:1px;text-transform:uppercase;font-size:13px;margin-right:auto}
+.editor-bar select,.editor-bar button,.editor-bar label.file-btn{background:#f6f7ef;color:#17241b;border:1px solid #9daa9b;border-radius:6px;padding:8px 10px;font-weight:700;font-size:12px}
+.editor-bar button:hover,.editor-bar .file-btn:hover{background:#e5edda}
+.editor-bar .danger{background:#f6dfdc;color:#671e1e}
+.editor-bar #profileSelect{max-width:200px;min-width:120px}
+.editor-bar .file-btn{cursor:pointer}
+.editor-bar input[type=file]{display:none}
+#saveStatus{font-size:11px;color:#d1e4cb;flex-basis:100%;text-align:right}
+.photo-tools{max-width:1050px;margin:0 auto 10px;padding:8px 12px;border:1px solid #bdcabd;border-radius:8px;background:#f7faf2;
+ display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:12px}
+.photo-tools input{flex:1;min-width:180px;padding:7px;border:1px solid #a9b7a1;border-radius:4px}
+.photo-tools button{padding:7px 11px;border:1px solid #748b70;border-radius:5px;background:#e3eddb;font-weight:bold}
+.photo-tools .tip{color:#56634f}
+.scroll-hint{max-width:1050px;margin:0 auto 6px;color:#4b614e;font-size:11px;display:none}
+.sheet-scroll{max-width:1080px;overflow-x:auto;margin:auto;padding:3px 9px 12px}
+.sheet{min-width:920px;max-width:1020px;margin:0 auto;padding:24px 29px 35px;
+ border:5px solid #153821;border-radius:65px;background:var(--frame);box-shadow:inset 0 0 0 3px #41734e,inset 0 0 0 7px #041b0f,0 5px 18px #0005}
+.sheet-inner{border:5px ridge #9fa99b;background:var(--paper);box-shadow:0 0 0 2px #07190d}
+.section-title{margin:0;line-height:1;font-size:31px;text-align:center;font-weight:1000;letter-spacing:-1px;
+ background:linear-gradient(100deg,#f1f1ee,#a7aaa8 26%,#f5f5f3 55%,#b6b7b5 78%,#eeeeec);border-bottom:2px solid var(--line)}
+.sheet input[type=text],.sheet input[type=number],.sheet textarea{border:0;border-bottom:1px solid var(--line);
+ background:transparent;color:#131b11;border-radius:0;outline-color:#47724d;min-width:0}
+.sheet input[type=number]{appearance:textfield;-moz-appearance:textfield}
+.sheet input::-webkit-inner-spin-button,.sheet input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.top{display:grid;grid-template-columns:25% 55% 20%;min-height:218px}
+.identity{padding:6px 8px;border-right:3px solid var(--line)}
+.identity-title{margin:-2px -3px 12px;padding:3px 4px;background:#060907;color:#fff;font-size:20px;letter-spacing:-.8px;white-space:nowrap}
+.id-row{display:flex;align-items:baseline;gap:4px;margin:7px 0;font-weight:800;font-size:13px}
+.id-row input{width:100%;font-size:13px;padding:2px 0}
+.id-row.twins{gap:4px}.id-row.twins input:first-of-type{width:32%}.id-row.twins input:last-of-type{width:33%}
+.characteristics{border-right:3px solid var(--line)}
+.characteristics .section-title{font-size:37px}
+.attributes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px 5px;padding:13px 8px}
+.attribute{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:24px;font-weight:1000;letter-spacing:-1px}
+.attr-box{height:44px;flex:1;min-width:0;max-width:91px;display:grid;grid-template-columns:53% 47%;border:2px solid var(--line)}
+.attr-box input{width:100%;height:100%;border:0!important;text-align:center;font-size:20px;font-weight:900}
+.attr-derived{display:grid;grid-template-rows:1fr 1fr;border-left:1px solid var(--line);font-size:12px;text-align:center;line-height:19px}
+.attr-derived span:first-child{border-bottom:1px solid var(--line)}
+.attr-move{font-size:14px;letter-spacing:0}.attr-move .attr-box{border-radius:18px;display:flex;overflow:hidden}
+.attr-move .attr-box input{font-size:20px}
+.portrait{background:#fff;display:flex;position:relative;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.portrait img{display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.portrait .placeholder{text-align:center;color:#6a766b;padding:15px;font-size:12px;font-weight:800;letter-spacing:1px}
+.portrait.has-image img{display:block}.portrait.has-image .placeholder{display:none}
+.portrait:focus-visible{outline:4px solid var(--gold);outline-offset:-4px}
+.tracking-area{border-top:3px solid var(--line);border-bottom:3px solid var(--line);background:#e1e9dc}
+.conditions{padding:4px 9px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:7px;
+ border-bottom:2px solid var(--line);font-size:12px;font-weight:800}
+.conditions label{white-space:nowrap}.conditions input[type=checkbox]{accent-color:#183f27;vertical-align:middle}
+.conditions .tiny{width:44px;padding:2px 1px;text-align:center;font-size:12px}
+.tracker-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;padding:4px}
+.tracker{background:#f9faf5;border:2px solid var(--line);min-width:0}
+.tracker.hp{grid-column:span 3}.tracker.sanity{grid-column:span 9}
+.tracker.luck{grid-column:span 9}.tracker.magic{grid-column:span 3}
+.tracker-head{display:flex;gap:4px;align-items:center;justify-content:space-between;padding:3px 7px 4px;
+ min-height:32px;background:linear-gradient(90deg,#dae5d7,#f7f8f3)}
+.tracker-head strong{font-size:16px;letter-spacing:-.7px}
+.tracker-head span{font-size:11px;white-space:nowrap}
+.tracker-head input{width:39px;text-align:center;font-size:12px;font-weight:800}
+.number-grid{padding:3px;display:grid;gap:1px}
+.hp .number-grid,.magic .number-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.sanity .number-grid{grid-template-columns:repeat(20,minmax(0,1fr))}
+.luck .number-grid{grid-template-columns:repeat(20,minmax(0,1fr))}
+.number-grid button{height:21px;min-width:0;padding:0;border:1px solid transparent;border-radius:2px;background:transparent;
+ font-size:12px;font-weight:600;color:#1b2319;font-variant-numeric:tabular-nums}
+.number-grid button:hover{border-color:#789c7e;background:#d0dec9}
+.number-grid button.selected{background:var(--chosen);color:var(--chosen-text);border-color:#07190b;box-shadow:inset 0 0 0 1px #bad4b7}
+.brand{margin:1px 0 -1px;text-align:center;font-family:Georgia,serif;color:#153a17;text-shadow:1px 1px 0 #b7b477;
+ font-weight:900;font-size:39px;letter-spacing:-2px}
+.skills-section{border-bottom:3px solid var(--line)}
+.skills-section .section-title{font-size:30px}
+.skills-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:6px 5px}
+.skill-column{display:flex;flex-direction:column;min-width:0}
+.skill-row{display:flex;gap:4px;align-items:center;height:37px;padding:2px 3px;font-size:12px}
+.skill-row:nth-child(even){background:var(--stripe)}
+.skill-row input[type=checkbox]{width:16px;height:16px;flex:0 0 16px;margin:0;accent-color:#1a462b}
+.skill-row .skill-name{flex:1;width:0;font-size:11.5px;font-weight:750;letter-spacing:-.35px;padding:1px 0}
+.skill-scores{flex:0 0 59px;height:30px;display:grid;grid-template-columns:32px 25px;
+ grid-template-rows:1fr 1fr;border:1.5px solid var(--line)}
+.skill-scores input{grid-row:1/3;width:100%;height:100%;font-size:13px;text-align:center;font-weight:bold;border:0!important}
+.skill-scores .score-hard{border-left:1px solid var(--line);border-bottom:1px solid var(--line)}
+.skill-scores span{font-size:10px;text-align:center;line-height:13px}
+.lower-grid{display:grid;grid-template-columns:78% 22%}
+.weapons{border-right:3px solid var(--line)}
+.weapons .section-title,.combat .section-title{font-size:30px}
+.weapon-head,.weapon-row{display:grid;grid-template-columns:22% 9% 9% 9% 15% 10% 9% 9% 8%;gap:0;align-items:center;padding:0 4px}
+.weapon-head{font-size:11px;font-weight:900;text-align:center;margin-top:5px}
+.weapon-row{height:29px}
+.weapon-row input{width:95%;padding:2px 0;text-align:center;font-size:12px}
+.weapon-row input:first-child{text-align:left}
+.combat{padding-bottom:8px}.combat-row{display:flex;justify-content:space-between;gap:7px;align-items:center;margin:9px 7px;font-size:15px;font-weight:850}
+.combat-row input{width:49%;padding:7px 2px;border:1.5px solid var(--line)!important;border-radius:18px!important;text-align:center;font-weight:bold;font-size:14px}
+.combat-row.dodge input{border-radius:0!important}
+.notes-panel{max-width:1050px;margin:12px auto 30px;padding:14px;border-radius:8px;background:#f5f7f0;border:1px solid #b4c5b2}
+.notes-panel summary{font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase}
+.notes-panel textarea{margin-top:10px;width:100%;min-height:100px;border:1px solid #b5c4b3;padding:10px;border-radius:5px;resize:vertical}
+.notes-panel p{font-size:12px;color:#5d6f5e}
+.footnote{font-size:11px;max-width:1050px;margin:0 auto 25px;color:#58665a;text-align:center}
+/* Responsive design: never force the paper to be wider than the device. */
+.upload-holder{position:relative;display:inline-flex;align-items:center;justify-content:center;border:1px solid #748b70;border-radius:5px;background:#e3eddb;font-weight:800;min-height:38px;overflow:hidden}
+.upload-holder label{display:block;padding:9px 12px;cursor:pointer}
+.upload-holder input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:60px}
+#saveStatus.error{color:#ffd2c9}
+#saveStatus.success{color:#b8e9bf}
+.sheet-scroll{width:100%;max-width:1080px}
+.weapon-cell{min-width:0;display:flex;flex-direction:column;justify-content:end}
+.weapon-label{display:none}
+.weapon-cell input{width:95%}
+@media(max-width:980px){
+ body{padding:10px}
+ .sheet{min-width:0;width:100%;max-width:940px}
+ .sheet-scroll{padding:0;margin:0 auto;overflow:visible}
+ .skills-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .editor-bar strong{flex-basis:100%}
+ .scroll-hint{display:none}
+ .tracker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .tracker.hp,.tracker.sanity,.tracker.luck,.tracker.magic{grid-column:auto}
+ .tracker.sanity,.tracker.luck{grid-column:span 2}
+ .sanity .number-grid,.luck .number-grid{grid-template-columns:repeat(14,minmax(0,1fr))}
+ .number-grid button{min-height:27px}
+}
+@media(max-width:650px){
+ body{padding:7px;background:#cfdbcf}
+ .editor-bar{gap:8px;padding:10px;border-radius:10px}
+ .editor-bar select{flex:1;max-width:none!important;min-width:130px!important}
+ .editor-bar button,.editor-bar label.file-btn{min-height:40px;font-size:12px}
+ .editor-bar strong{font-size:13px}
+ #saveStatus{font-size:12px;text-align:left}
+ .photo-tools{padding:10px;gap:7px}
+ .photo-tools input[type=url]{flex:1 1 100%;min-width:0;font-size:16px}
+ .photo-tools .tip{flex:1 1 100%}
+ .sheet{padding:11px 11px 15px;border-width:3px;border-radius:26px;box-shadow:inset 0 0 0 2px #41734e,inset 0 0 0 5px #041b0f,0 3px 12px #0004}
+ .sheet-inner{border-width:2px}
+ .section-title,.characteristics .section-title,.skills-section .section-title,.weapons .section-title,.combat .section-title{font-size:25px;letter-spacing:-.5px;padding:4px 2px}
+ .top{grid-template-columns:minmax(0,1fr) 115px;min-height:0}
+ .identity{grid-column:1;grid-row:1;border-right:2px solid var(--line);padding:6px}
+ .identity-title{font-size:clamp(13px,3.8vw,19px);white-space:normal;line-height:1.15;margin-bottom:7px}
+ .id-row{font-size:12px;margin:6px 0}
+ .id-row input{font-size:16px;min-height:24px}
+ .portrait{grid-column:2;grid-row:1;min-height:165px;aspect-ratio:3/4}
+ .portrait .placeholder{font-size:10px;padding:5px;overflow-wrap:anywhere}
+ .characteristics{grid-column:1/-1;grid-row:2;border-right:0;border-top:2px solid var(--line)}
+ .attributes{gap:7px 6px;padding:9px 6px}
+ .attribute{font-size:15px;letter-spacing:0;gap:3px}
+ .attr-box{height:40px;max-width:none;border-width:1.5px}
+ .attr-box input{font-size:16px;min-width:0}
+ .attr-derived{font-size:11px;line-height:18px}
+ .attr-move{font-size:12px}
+ .conditions{gap:8px;font-size:12px}
+ .conditions label{min-height:28px;display:flex;align-items:center;gap:4px}
+ .conditions input[type=checkbox]{width:18px;height:18px}
+ .tracker-grid{display:flex;flex-direction:column;gap:7px;padding:7px}
+ .tracker{width:100%}
+ .tracker-head{min-height:39px}
+ .tracker-head strong{font-size:17px}
+ .tracker-head span{font-size:12px}
+ .tracker-head input{font-size:15px;width:42px}
+ .sanity .number-grid,.luck .number-grid{grid-template-columns:repeat(8,minmax(0,1fr))}
+ .hp .number-grid,.magic .number-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+ .number-grid{gap:3px;padding:5px}
+ .number-grid button{height:36px;min-height:36px;border:1px solid #d8e4d5;border-radius:4px;font-size:13px}
+ .brand{font-size:clamp(28px,8.8vw,39px);letter-spacing:-1.7px;padding:4px 0}
+ .skills-grid{grid-template-columns:1fr;gap:10px;padding:8px}
+ .skill-column{gap:0}
+ .skill-row{height:44px;gap:8px;padding:4px 7px}
+ .skill-row input[type=checkbox]{width:21px;height:21px;flex-basis:21px}
+ .skill-row .skill-name{font-size:14px;letter-spacing:0;min-height:34px}
+ .skill-scores{flex-basis:78px;height:36px;grid-template-columns:44px 32px}
+ .skill-scores input{font-size:17px}
+ .skill-scores span{font-size:12px;line-height:16px}
+ .lower-grid{grid-template-columns:1fr}
+ .weapons{border-right:0;border-bottom:3px solid var(--line)}
+ .weapon-head{display:none}
+ .weapon-row{height:auto;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:9px;border-bottom:1px solid #bac8af}
+ .weapon-row:nth-child(even){background:#e9eee3}
+ .weapon-cell .weapon-label{display:block;font-size:11px;font-weight:800;margin-bottom:4px}
+ .weapon-cell:first-child{grid-column:1/-1}
+ .weapon-cell input{width:100%;min-height:31px;padding:4px;border:1px solid #859377;font-size:14px;background:#fff}
+ .combat{display:grid;grid-template-columns:1fr;gap:0}
+ .combat .section-title{grid-column:1/-1}
+ .combat-row{font-size:15px;margin:8px 12px}
+ .combat-row input{width:50%;min-height:35px}
+ .notes-panel{margin-top:8px;padding:12px}
+ .notes-panel textarea{font-size:16px}
+}
+@media(max-width:355px){
+ .top{grid-template-columns:minmax(0,1fr) 91px}
+ .portrait{aspect-ratio:auto;min-height:130px;width:100%}
+ .identity-title{font-size:13px}
+ .attributes{gap:5px 3px;padding:7px 3px}
+ .attribute{font-size:13px;gap:2px}
+ .attr-box{height:36px}
+ .attr-box input{font-size:14px}
+ .attr-derived{font-size:9px;line-height:16px}
+ .tracker-head strong{font-size:15px}
+ .sanity .number-grid,.luck .number-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+}
+
+@media print{
+ @page{size:A3 portrait;margin:8mm}
+ body{padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .editor-bar,.photo-tools,.scroll-hint,.notes-panel,.footnote{display:none!important}
+ .sheet-scroll{overflow:visible;padding:0;margin:0;max-width:none}
+ .sheet{min-width:0;width:100%;max-width:none;border-radius:36px;padding:15px 19px 20px;box-shadow:none}
+ .number-grid button{height:19px}.skill-row{height:34px}
+}
+
+/* V3: Fixed original skill titles with a separate, always-visible base %. */
+.sheet-help{max-width:1050px;margin:0 auto 9px;color:#304831;background:#f1f7ec;border:1px solid #b4c8ab;border-radius:7px;padding:9px 12px;font-size:12px;line-height:1.45}
+.skills-legend{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:5px 12px 3px;color:#3c5037;font-size:10px;font-weight:700}
+.skills-legend b{color:#142f20}
+.skill-row .skill-fixed{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.1;font-size:11.5px;font-weight:750;letter-spacing:-.28px}
+.skill-row .skill-base{color:#3b4f35;font-size:10px;font-weight:900;white-space:nowrap}
+.skill-row .skill-name{min-width:0}
+.number-grid button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.number-grid button.selected{background:#163e25!important;color:#fff!important;border:2px solid #ceac54!important;outline:1px solid #163e25;outline-offset:-1px;font-weight:900;box-shadow:inset 0 0 0 1px #a2d1ab,0 0 0 1px #ceac54}
+@media (min-width:651px){.skill-row{height:41px}.skill-row .skill-fixed{font-size:11px}}
+@media (max-width:650px){.skill-row{min-height:48px;height:auto}.skill-row .skill-fixed{font-size:14px;line-height:1.18}.skill-row .skill-base{font-size:12px}.skills-legend{font-size:11px;padding:8px 12px}.sheet-help{font-size:12px}}
+@media print{.sheet-help{display:none!important}}
+
+/* ==============================================================
+   FIELD KIT / DICE TRAY: outside the sheet on wide desktops,
+   below the sheet on narrower monitors & mobiles.
+   ============================================================== */
+.play-layout{display:grid;grid-template-columns:minmax(0,1020px) 278px;gap:16px;align-items:start;max-width:1350px;margin:0 auto}
+.play-layout .sheet-scroll{width:100%;max-width:none;margin:0;padding:3px 0 12px;min-width:0;overflow:visible}
+.play-layout .sheet{width:100%;min-width:0}
+.editor-bar,.photo-tools,.sheet-help{max-width:1350px}
+.editor-bar .dice-jump{display:inline-flex;align-items:center;justify-content:center;min-height:33px;background:#d8b968;border:1px solid #cfb26f;color:#183423;border-radius:6px;font-size:12px;font-weight:900;text-decoration:none;padding:8px 10px}
+.editor-bar .dice-jump:hover{background:#f1daa0}
+.dice-rail{align-self:start;position:static;max-height:none;overflow:visible;background:#f6f5e9;border:4px solid #0b3820;border-radius:21px;box-shadow:inset 0 0 0 2px #b49d64,0 6px 18px #0003;color:#1b2a1e;padding:12px;scrollbar-width:thin;scrollbar-color:#96a68d transparent}
+.dice-rail-head{background:#153d29;color:#f2eedc;padding:12px;margin:-2px -2px 10px;border-radius:11px 11px 5px 5px}
+.dice-overline{display:block;font-size:9px;font-weight:900;letter-spacing:2px;color:#b3c6ac}
+.dice-rail-head h2{margin:4px 0 6px;font:bold 24px Georgia,serif;letter-spacing:-.7px}
+.dice-rail-head h2 span{color:#e0bd6e}
+.dice-rail-head p{margin:0;font-size:11px;line-height:1.5;color:#d5e0d1}
+.dice-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.dice-tile{border:1px solid #8e9d80;border-radius:9px;background:#fcfcf6;min-width:0;padding:8px 4px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;min-height:136px;color:#19261a;transition:transform .12s,border-color .12s,background-color .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.dice-tile:hover{background:#e9eedf;border-color:#2c563a;transform:translateY(-1px)}
+.dice-tile:active{background:#dfd3ae;transform:scale(.98)}
+.dice-tile:focus-visible{outline:3px solid #cdac58;outline-offset:2px}
+.die-icon{width:55px;height:55px;flex-shrink:0;filter:drop-shadow(0px 2px 1px #0002)}
+.die-art polygon{fill:#2e5a3a;stroke:#d0b66e;stroke-width:2.5;stroke-linejoin:round}
+.die-art path{fill:none;stroke:#c0d6b5;stroke-width:1.5;stroke-linejoin:round}
+.die-icon text{fill:#fff9e4;font-size:17px;font-weight:900;stroke:#21412c;stroke-width:.5px;paint-order:stroke}
+.die-copy{display:flex;flex-direction:column;gap:2px;width:100%;line-height:1.15}
+.die-copy b{font:bold 16px Georgia,serif}
+.die-copy span{font-size:10px;font-weight:800}
+.die-copy small{color:#5c6a56;font-size:9px;line-height:1.25}
+.dice-settings,.dice-result-panel,.dice-history-panel{margin-top:10px;padding:10px;border:1px solid #aabb9b;border-radius:8px;background:#fffef8}
+.dice-settings>label{font-size:11px;font-weight:900;display:block;margin-bottom:5px}
+.dice-settings select,.dice-quick-controls input{display:block;width:100%;min-width:0;background:#fff;color:#172a1e;border:1px solid #82967b;border-radius:5px;padding:9px 7px;font-size:12px;min-height:39px;margin-bottom:10px}
+.dice-settings-rule{border-top:1px solid #d4decf;margin:6px 0 10px}
+.dice-quick-controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.dice-quick-controls label{font-size:10px;font-weight:900}
+.dice-quick-controls input{margin:4px 0}
+.dice-settings-note{font-size:10px;color:#687563;line-height:1.4;margin:7px 0 0}
+.dice-result-panel{background:#163e29;color:#fffbee;border-color:#bcad7b;text-align:center;overflow-wrap:anywhere}
+.dice-result-panel .dice-overline{color:#d6bf84}
+.dice-result-number{font:bold 43px Georgia,serif;line-height:1.2;padding:8px 0 3px;color:#ffe1a0;font-variant-numeric:tabular-nums}
+.dice-result-title{font-size:13px;display:block}
+.dice-result-detail{font-size:11px;line-height:1.5;color:#d8e7d5;margin:5px 0 3px;white-space:pre-line}
+.dice-result-panel[data-grade="fail"] .dice-result-number,.dice-result-panel[data-grade="fumble"] .dice-result-number{color:#ffb29f}
+.dice-result-panel[data-grade="critical"] .dice-result-number{color:#fce96f}
+.dice-result-panel[data-grade="extreme"] .dice-result-number{color:#9be6b8}
+.dice-history-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dice-history-title b{font:bold 16px Georgia,serif}
+.dice-history-title button{background:#e8e5d5;color:#314332;border:1px solid #b9c2ae;border-radius:5px;padding:5px 9px;font-size:10px;font-weight:800;min-height:30px}
+#diceHistory{padding:0;margin:8px 0;list-style:none;max-height:220px;overflow-y:auto;font-variant-numeric:tabular-nums}
+#diceHistory li{border-top:1px solid #e1e7db;padding:7px 0;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+#diceHistory li strong{color:#244a30}
+#diceHistory li span{color:#5b6659}
+#diceHistory .dice-history-empty{color:#667265;font-style:italic}
+.dice-history-panel>small{display:block;color:#63745e;font-size:10px;line-height:1.4}
+.dice-back-link{display:block;text-align:center;margin:10px 0 0;font-size:11px;font-weight:800;color:#264e35}
+@media(max-width:1200px){
+ .play-layout{display:flex;flex-direction:column;max-width:1020px}
+ .play-layout .sheet-scroll{max-width:1020px}
+ .dice-rail{width:100%;max-height:none;overflow:visible;position:static;top:auto;display:block}
+ .dice-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .dice-tile{min-height:128px}
+}
+@media(max-width:650px){
+ .play-layout{gap:10px}
+ .dice-rail{padding:10px;border-radius:15px;border-width:3px}
+ .dice-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dice-tile{min-height:131px;padding:8px 7px}
+ .die-icon{width:60px;height:60px}
+ .die-copy span{font-size:11px}
+ .die-copy small{font-size:10px}
+ .dice-result-number{font-size:48px}
+ .editor-bar .dice-jump{min-height:40px}
+}
+@media(max-width:340px){.die-copy small{font-size:9px}.die-icon{width:50px;height:50px}}
+@media print{
+ .dice-rail,.editor-bar .dice-jump{display:none!important}
+ .play-layout{display:block;max-width:none}
+ .play-layout .sheet-scroll{max-width:none}
+}
+
+</style>
+</head>
+<body>
+<!-- CONTROL BAR: all character data below is editable in the browser. -->
+<noscript><div style="background:#fff4c5;border:2px solid #8b6a25;padding:12px;margin-bottom:12px;">The skills are visible, but saving, selecting tracker numbers, creating new profiles, and image uploads require JavaScript. Please open this HTML file in Safari, Chrome, or Firefox rather than in a code preview.</div></noscript>
+<div class="editor-bar">
+  <strong>Investigator Records • autosave enabled</strong>
+  <select id="profileSelect" aria-label="Choose investigator"></select>
+  <button id="saveBtn" type="button">Save Sheet</button>
+  <button id="addProfile" type="button">+ New</button>
+  <button id="copyProfile" type="button">Duplicate</button>
+  <button id="deleteProfile" class="danger" type="button">Delete</button>
+  <button id="exportBtn" type="button">Download Backup</button>
+  <label class="file-btn" for="importFile">Load Backup</label>
+  <input type="file" id="importFile" accept=".json,application/json">
+  <button type="button" id="printBtn">Print / PDF</button>
+  <a href="#diceTray" class="dice-jump" aria-label="Jump to dice roller">🎲 Dice Roller ↓</a>
+  <span id="saveStatus" role="status" aria-live="polite">Ready. Your edits will save locally.</span>
+</div>
+<div class="photo-tools">
+  <b>Portrait:</b>
+  <div class="upload-holder"><label for="photoFile">Upload image</label><input id="photoFile" type="file" accept="image/*" aria-label="Upload investigator image"></div>
+  <input id="photoURL" type="url" placeholder="Or paste a direct image URL (https://...)">
+  <button id="applyPhoto" type="button">Use URL</button>
+  <button id="removePhoto" type="button">Clear</button>
+  <span class="tip">You can also tap the blank portrait. Uploaded images are compressed for saving.</span>
+</div>
+<p class="sheet-help">Use the Dice Roller alongside the sheet for CoC percentile checks, bonus/penalty dice, and damage rolls. Tap a number in HP, Sanity, Luck, or Magic Points to move that section’s highlighted value. Printed skill names and original base percentages are fixed; change the Full score or use a blank custom skill slot. Save Sheet stores records on this browser, and Download Backup keeps a transferable copy.</p>
+<div class="play-layout" id="sheetTop"><div class="sheet-scroll"><main class="sheet"><div class="sheet-inner">
+  <section class="top">
+    <div class="identity">
+      <div class="identity-title">Modern Era Investigator</div>
+      <label class="id-row">Name <input data-field="name" type="text" aria-label="Name"></label>
+      <label class="id-row">Player <input data-field="player" type="text" aria-label="Player"></label>
+      <label class="id-row">Occupation <input data-field="occupation" type="text" aria-label="Occupation"></label>
+      <div class="id-row twins"><label for="age">Age</label><input id="age" data-field="age" type="text"><label for="sex">Sex</label><input id="sex" data-field="sex" type="text"></div>
+      <label class="id-row">Residence <input data-field="residence" type="text" aria-label="Residence"></label>
+      <label class="id-row">Birthplace <input data-field="birthplace" type="text" aria-label="Birthplace"></label>
+    </div>
+    <div class="characteristics">
+      <h1 class="section-title">Characteristics</h1>
+      <div id="attributes" class="attributes"><label class="attribute">STR<span class="attr-box"><input type="number" data-field="STR" value="50" min="0" max="999" aria-label="STR"><span class="attr-derived"><span data-derived="STR-hard">25</span><span data-derived="STR-extreme">10</span></span></span></label><label class="attribute">DEX<span class="attr-box"><input type="number" data-field="DEX" value="50" min="0" max="999" aria-label="DEX"><span class="attr-derived"><span data-derived="DEX-hard">25</span><span data-derived="DEX-extreme">10</span></span></span></label><label class="attribute">POW<span class="attr-box"><input type="number" data-field="POW" value="50" min="0" max="999" aria-label="POW"><span class="attr-derived"><span data-derived="POW-hard">25</span><span data-derived="POW-extreme">10</span></span></span></label><label class="attribute">CON<span class="attr-box"><input type="number" data-field="CON" value="50" min="0" max="999" aria-label="CON"><span class="attr-derived"><span data-derived="CON-hard">25</span><span data-derived="CON-extreme">10</span></span></span></label><label class="attribute">APP<span class="attr-box"><input type="number" data-field="APP" value="50" min="0" max="999" aria-label="APP"><span class="attr-derived"><span data-derived="APP-hard">25</span><span data-derived="APP-extreme">10</span></span></span></label><label class="attribute">EDU<span class="attr-box"><input type="number" data-field="EDU" value="50" min="0" max="999" aria-label="EDU"><span class="attr-derived"><span data-derived="EDU-hard">25</span><span data-derived="EDU-extreme">10</span></span></span></label><label class="attribute">SIZ<span class="attr-box"><input type="number" data-field="SIZ" value="50" min="0" max="999" aria-label="SIZ"><span class="attr-derived"><span data-derived="SIZ-hard">25</span><span data-derived="SIZ-extreme">10</span></span></span></label><label class="attribute">INT<span class="attr-box"><input type="number" data-field="INT" value="50" min="0" max="999" aria-label="INT"><span class="attr-derived"><span data-derived="INT-hard">25</span><span data-derived="INT-extreme">10</span></span></span></label><label class="attribute attr-move">Move<br>Rate <span class="attr-box"><input type="number" data-field="MOVE" value="8" min="0" max="99" aria-label="Move Rate"></span></label></div>
+    </div>
+    <div class="portrait" id="portrait" role="button" tabindex="0" aria-label="Upload investigator portrait">
+      <img id="portraitImg" alt="Investigator portrait">
+      <div class="placeholder">TAP TO ADD<br>INVESTIGATOR<br>PORTRAIT</div>
+    </div>
+  </section>
+  <section class="tracking-area">
+    <div class="conditions">
+      <label><input type="checkbox" data-condition="majorWound"> Major Wound</label>
+      <label><input type="checkbox" data-condition="unconscious"> Unconscious</label>
+      <label><input type="checkbox" data-condition="dying"> Dying</label>
+      <label><input type="checkbox" data-condition="tempInsane"> Temp. Insane</label>
+      <label><input type="checkbox" data-condition="indefInsane"> Indef. Insane</label>
+      <label><input type="checkbox" data-condition="insane"> Insane</label>
+      <label>Starting SAN <input class="tiny" type="number" min="0" max="99" data-field="startingSanity"></label>
+    </div>
+    <div class="tracker-grid">
+      <div class="tracker hp" data-track="hp"><div class="tracker-head"><strong>HIT POINTS</strong><span>Now <b class="current-label">10</b> / Max <input type="number" min="0" max="200" data-max="hp" value="10"></span></div><div class="number-grid"><button>00</button><button>01</button><button>02</button><button>03</button><button>04</button><button>05</button><button>06</button><button>07</button><button>08</button><button>09</button><button class=selected>10</button><button>11</button><button>12</button><button>13</button><button>14</button><button>15</button><button>16</button><button>17</button><button>18</button><button>19</button><button>20</button></div></div>
+      <div class="tracker sanity" data-track="sanity"><div class="tracker-head"><strong>SANITY</strong><span>Now <b class="current-label">50</b> / Max <input type="number" min="0" max="99" data-max="sanity" value="99"></span></div><div class="number-grid"><button>00</button><button>01</button><button>02</button><button>03</button><button>04</button><button>05</button><button>06</button><button>07</button><button>08</button><button>09</button><button>10</button><button>11</button><button>12</button><button>13</button><button>14</button><button>15</button><button>16</button><button>17</button><button>18</button><button>19</button><button>20</button><button>21</button><button>22</button><button>23</button><button>24</button><button>25</button><button>26</button><button>27</button><button>28</button><button>29</button><button>30</button><button>31</button><button>32</button><button>33</button><button>34</button><button>35</button><button>36</button><button>37</button><button>38</button><button>39</button><button>40</button><button>41</button><button>42</button><button>43</button><button>44</button><button>45</button><button>46</button><button>47</button><button>48</button><button>49</button><button class=selected>50</button><button>51</button><button>52</button><button>53</button><button>54</button><button>55</button><button>56</button><button>57</button><button>58</button><button>59</button><button>60</button><button>61</button><button>62</button><button>63</button><button>64</button><button>65</button><button>66</button><button>67</button><button>68</button><button>69</button><button>70</button><button>71</button><button>72</button><button>73</button><button>74</button><button>75</button><button>76</button><button>77</button><button>78</button><button>79</button><button>80</button><button>81</button><button>82</button><button>83</button><button>84</button><button>85</button><button>86</button><button>87</button><button>88</button><button>89</button><button>90</button><button>91</button><button>92</button><button>93</button><button>94</button><button>95</button><button>96</button><button>97</button><button>98</button><button>99</button></div></div>
+      <div class="tracker luck" data-track="luck"><div class="tracker-head"><strong>LUCK</strong><span>Now <b class="current-label">50</b> / Max <input type="number" min="0" max="99" data-max="luck" value="99"></span></div><div class="number-grid"><button>00</button><button>01</button><button>02</button><button>03</button><button>04</button><button>05</button><button>06</button><button>07</button><button>08</button><button>09</button><button>10</button><button>11</button><button>12</button><button>13</button><button>14</button><button>15</button><button>16</button><button>17</button><button>18</button><button>19</button><button>20</button><button>21</button><button>22</button><button>23</button><button>24</button><button>25</button><button>26</button><button>27</button><button>28</button><button>29</button><button>30</button><button>31</button><button>32</button><button>33</button><button>34</button><button>35</button><button>36</button><button>37</button><button>38</button><button>39</button><button>40</button><button>41</button><button>42</button><button>43</button><button>44</button><button>45</button><button>46</button><button>47</button><button>48</button><button>49</button><button class=selected>50</button><button>51</button><button>52</button><button>53</button><button>54</button><button>55</button><button>56</button><button>57</button><button>58</button><button>59</button><button>60</button><button>61</button><button>62</button><button>63</button><button>64</button><button>65</button><button>66</button><button>67</button><button>68</button><button>69</button><button>70</button><button>71</button><button>72</button><button>73</button><button>74</button><button>75</button><button>76</button><button>77</button><button>78</button><button>79</button><button>80</button><button>81</button><button>82</button><button>83</button><button>84</button><button>85</button><button>86</button><button>87</button><button>88</button><button>89</button><button>90</button><button>91</button><button>92</button><button>93</button><button>94</button><button>95</button><button>96</button><button>97</button><button>98</button><button>99</button></div></div>
+      <div class="tracker magic" data-track="magic"><div class="tracker-head"><strong>MAGIC POINTS</strong><span>Now <b class="current-label">10</b> / Max <input type="number" min="0" max="200" data-max="magic" value="10"></span></div><div class="number-grid"><button>00</button><button>01</button><button>02</button><button>03</button><button>04</button><button>05</button><button>06</button><button>07</button><button>08</button><button>09</button><button class=selected>10</button><button>11</button><button>12</button><button>13</button><button>14</button><button>15</button><button>16</button><button>17</button><button>18</button><button>19</button><button>20</button><button>21</button><button>22</button><button>23</button><button>24</button></div></div>
+    </div>
+  </section>
+  <div class="brand">Call of Cthulhu</div>
+  <section class="skills-section"><h2 class="section-title">Skills</h2><div class="skills-legend"><span>Printed percentage = starting/base value</span><span>Boxes: <b>Full</b> / <b>Half</b> / <b>Fifth</b></span></div><div class="skills-grid" id="skillsGrid"><div class="skill-column"><div class="skill-row"><input type="checkbox" data-skill-check="0" aria-label="Mark skill for improvement"><span class="skill-fixed">Accounting <span class="skill-base" data-skill-base="0">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="0" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="0" title="Half">2</span><span data-skill-extreme="0" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="1" aria-label="Mark skill for improvement"><span class="skill-fixed">Anthropology <span class="skill-base" data-skill-base="1">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="1" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="1" title="Half">0</span><span data-skill-extreme="1" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="2" aria-label="Mark skill for improvement"><span class="skill-fixed">Appraise <span class="skill-base" data-skill-base="2">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="2" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="2" title="Half">2</span><span data-skill-extreme="2" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="3" aria-label="Mark skill for improvement"><span class="skill-fixed">Archaeology <span class="skill-base" data-skill-base="3">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="3" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="3" title="Half">0</span><span data-skill-extreme="3" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="4" aria-label="Mark skill for improvement"><span class="skill-fixed">Art / Craft <span class="skill-base" data-skill-base="4">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="4" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="4" title="Half">2</span><span data-skill-extreme="4" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="5" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="5" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="5" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="5" title="Half">0</span><span data-skill-extreme="5" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="6" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="6" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="6" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="6" title="Half">0</span><span data-skill-extreme="6" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="7" aria-label="Mark skill for improvement"><span class="skill-fixed">Charm <span class="skill-base" data-skill-base="7">(15%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="7" value="15" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="7" title="Half">7</span><span data-skill-extreme="7" title="Fifth">3</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="8" aria-label="Mark skill for improvement"><span class="skill-fixed">Climb <span class="skill-base" data-skill-base="8">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="8" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="8" title="Half">10</span><span data-skill-extreme="8" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="9" aria-label="Mark skill for improvement"><span class="skill-fixed">Computer Use <span class="skill-base" data-skill-base="9">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="9" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="9" title="Half">2</span><span data-skill-extreme="9" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="10" aria-label="Mark skill for improvement"><span class="skill-fixed">Credit Rating <span class="skill-base" data-skill-base="10">(00%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="10" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="10" title="Half">0</span><span data-skill-extreme="10" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="11" aria-label="Mark skill for improvement"><span class="skill-fixed">Cthulhu Mythos <span class="skill-base" data-skill-base="11">(00%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="11" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="11" title="Half">0</span><span data-skill-extreme="11" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="12" aria-label="Mark skill for improvement"><span class="skill-fixed">Disguise <span class="skill-base" data-skill-base="12">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="12" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="12" title="Half">2</span><span data-skill-extreme="12" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="13" aria-label="Mark skill for improvement"><span class="skill-fixed">Dodge (half DEX) <span class="skill-base" data-skill-base="13">(25%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="13" value="25" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="13" title="Half">12</span><span data-skill-extreme="13" title="Fifth">5</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="14" aria-label="Mark skill for improvement"><span class="skill-fixed">Drive Auto <span class="skill-base" data-skill-base="14">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="14" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="14" title="Half">10</span><span data-skill-extreme="14" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="15" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="15" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="15" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="15" title="Half">0</span><span data-skill-extreme="15" title="Fifth">0</span></span></div></div><div class="skill-column"><div class="skill-row"><input type="checkbox" data-skill-check="16" aria-label="Mark skill for improvement"><span class="skill-fixed">Elec Repair <span class="skill-base" data-skill-base="16">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="16" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="16" title="Half">5</span><span data-skill-extreme="16" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="17" aria-label="Mark skill for improvement"><span class="skill-fixed">Electronics <span class="skill-base" data-skill-base="17">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="17" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="17" title="Half">0</span><span data-skill-extreme="17" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="18" aria-label="Mark skill for improvement"><span class="skill-fixed">Fast Talk <span class="skill-base" data-skill-base="18">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="18" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="18" title="Half">2</span><span data-skill-extreme="18" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="19" aria-label="Mark skill for improvement"><span class="skill-fixed">Fighting (Brawl) <span class="skill-base" data-skill-base="19">(25%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="19" value="25" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="19" title="Half">12</span><span data-skill-extreme="19" title="Fifth">5</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="20" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="20" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="20" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="20" title="Half">0</span><span data-skill-extreme="20" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="21" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="21" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="21" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="21" title="Half">0</span><span data-skill-extreme="21" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="22" aria-label="Mark skill for improvement"><span class="skill-fixed">Firearms (Handgun) <span class="skill-base" data-skill-base="22">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="22" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="22" title="Half">10</span><span data-skill-extreme="22" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="23" aria-label="Mark skill for improvement"><span class="skill-fixed">Firearms (Rifle/Shotgun) <span class="skill-base" data-skill-base="23">(25%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="23" value="25" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="23" title="Half">12</span><span data-skill-extreme="23" title="Fifth">5</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="24" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="24" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="24" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="24" title="Half">0</span><span data-skill-extreme="24" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="25" aria-label="Mark skill for improvement"><span class="skill-fixed">First Aid <span class="skill-base" data-skill-base="25">(30%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="25" value="30" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="25" title="Half">15</span><span data-skill-extreme="25" title="Fifth">6</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="26" aria-label="Mark skill for improvement"><span class="skill-fixed">History <span class="skill-base" data-skill-base="26">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="26" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="26" title="Half">2</span><span data-skill-extreme="26" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="27" aria-label="Mark skill for improvement"><span class="skill-fixed">Intimidate <span class="skill-base" data-skill-base="27">(15%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="27" value="15" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="27" title="Half">7</span><span data-skill-extreme="27" title="Fifth">3</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="28" aria-label="Mark skill for improvement"><span class="skill-fixed">Jump <span class="skill-base" data-skill-base="28">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="28" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="28" title="Half">10</span><span data-skill-extreme="28" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="29" aria-label="Mark skill for improvement"><span class="skill-fixed">Language (Other) <span class="skill-base" data-skill-base="29">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="29" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="29" title="Half">0</span><span data-skill-extreme="29" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="30" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="30" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="30" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="30" title="Half">0</span><span data-skill-extreme="30" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="31" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="31" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="31" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="31" title="Half">0</span><span data-skill-extreme="31" title="Fifth">0</span></span></div></div><div class="skill-column"><div class="skill-row"><input type="checkbox" data-skill-check="32" aria-label="Mark skill for improvement"><span class="skill-fixed">Language (Own) (EDU) <span class="skill-base" data-skill-base="32">(50%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="32" value="50" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="32" title="Half">25</span><span data-skill-extreme="32" title="Fifth">10</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="33" aria-label="Mark skill for improvement"><span class="skill-fixed">Law <span class="skill-base" data-skill-base="33">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="33" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="33" title="Half">2</span><span data-skill-extreme="33" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="34" aria-label="Mark skill for improvement"><span class="skill-fixed">Library Use <span class="skill-base" data-skill-base="34">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="34" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="34" title="Half">10</span><span data-skill-extreme="34" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="35" aria-label="Mark skill for improvement"><span class="skill-fixed">Listen <span class="skill-base" data-skill-base="35">(25%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="35" value="25" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="35" title="Half">12</span><span data-skill-extreme="35" title="Fifth">5</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="36" aria-label="Mark skill for improvement"><span class="skill-fixed">Locksmith <span class="skill-base" data-skill-base="36">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="36" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="36" title="Half">0</span><span data-skill-extreme="36" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="37" aria-label="Mark skill for improvement"><span class="skill-fixed">Mech. Repair <span class="skill-base" data-skill-base="37">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="37" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="37" title="Half">5</span><span data-skill-extreme="37" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="38" aria-label="Mark skill for improvement"><span class="skill-fixed">Medicine <span class="skill-base" data-skill-base="38">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="38" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="38" title="Half">0</span><span data-skill-extreme="38" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="39" aria-label="Mark skill for improvement"><span class="skill-fixed">Natural World <span class="skill-base" data-skill-base="39">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="39" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="39" title="Half">5</span><span data-skill-extreme="39" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="40" aria-label="Mark skill for improvement"><span class="skill-fixed">Navigate <span class="skill-base" data-skill-base="40">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="40" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="40" title="Half">5</span><span data-skill-extreme="40" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="41" aria-label="Mark skill for improvement"><span class="skill-fixed">Occult <span class="skill-base" data-skill-base="41">(05%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="41" value="5" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="41" title="Half">2</span><span data-skill-extreme="41" title="Fifth">1</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="42" aria-label="Mark skill for improvement"><span class="skill-fixed">Op. Hv. Machine <span class="skill-base" data-skill-base="42">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="42" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="42" title="Half">0</span><span data-skill-extreme="42" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="43" aria-label="Mark skill for improvement"><span class="skill-fixed">Persuade <span class="skill-base" data-skill-base="43">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="43" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="43" title="Half">5</span><span data-skill-extreme="43" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="44" aria-label="Mark skill for improvement"><span class="skill-fixed">Pilot <span class="skill-base" data-skill-base="44">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="44" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="44" title="Half">0</span><span data-skill-extreme="44" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="45" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="45" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="45" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="45" title="Half">0</span><span data-skill-extreme="45" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="46" aria-label="Mark skill for improvement"><span class="skill-fixed">Psychology <span class="skill-base" data-skill-base="46">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="46" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="46" title="Half">5</span><span data-skill-extreme="46" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="47" aria-label="Mark skill for improvement"><span class="skill-fixed">Psychoanalysis <span class="skill-base" data-skill-base="47">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="47" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="47" title="Half">0</span><span data-skill-extreme="47" title="Fifth">0</span></span></div></div><div class="skill-column"><div class="skill-row"><input type="checkbox" data-skill-check="48" aria-label="Mark skill for improvement"><span class="skill-fixed">Science <span class="skill-base" data-skill-base="48">(01%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="48" value="1" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="48" title="Half">0</span><span data-skill-extreme="48" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="49" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="49" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="49" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="49" title="Half">0</span><span data-skill-extreme="49" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="50" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="50" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="50" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="50" title="Half">0</span><span data-skill-extreme="50" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="51" aria-label="Mark skill for improvement"><span class="skill-fixed">Sleight of Hand <span class="skill-base" data-skill-base="51">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="51" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="51" title="Half">5</span><span data-skill-extreme="51" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="52" aria-label="Mark skill for improvement"><span class="skill-fixed">Spot Hidden <span class="skill-base" data-skill-base="52">(25%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="52" value="25" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="52" title="Half">12</span><span data-skill-extreme="52" title="Fifth">5</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="53" aria-label="Mark skill for improvement"><span class="skill-fixed">Stealth <span class="skill-base" data-skill-base="53">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="53" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="53" title="Half">10</span><span data-skill-extreme="53" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="54" aria-label="Mark skill for improvement"><span class="skill-fixed">Survival <span class="skill-base" data-skill-base="54">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="54" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="54" title="Half">5</span><span data-skill-extreme="54" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="55" aria-label="Mark skill for improvement"><span class="skill-fixed">Swim <span class="skill-base" data-skill-base="55">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="55" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="55" title="Half">10</span><span data-skill-extreme="55" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="56" aria-label="Mark skill for improvement"><span class="skill-fixed">Throw <span class="skill-base" data-skill-base="56">(20%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="56" value="20" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="56" title="Half">10</span><span data-skill-extreme="56" title="Fifth">4</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="57" aria-label="Mark skill for improvement"><span class="skill-fixed">Track <span class="skill-base" data-skill-base="57">(10%)</span></span><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="57" value="10" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="57" title="Half">5</span><span data-skill-extreme="57" title="Fifth">2</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="58" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="58" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="58" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="58" title="Half">0</span><span data-skill-extreme="58" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="59" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="59" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="59" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="59" title="Half">0</span><span data-skill-extreme="59" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="60" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="60" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="60" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="60" title="Half">0</span><span data-skill-extreme="60" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="61" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="61" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="61" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="61" title="Half">0</span><span data-skill-extreme="61" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="62" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="62" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="62" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="62" title="Half">0</span><span data-skill-extreme="62" title="Fifth">0</span></span></div><div class="skill-row"><input type="checkbox" data-skill-check="63" aria-label="Mark skill for improvement"><input class="skill-name" type="text" data-skill-name="63" placeholder="Custom skill" aria-label="Custom skill name" value=""><span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="63" value="0" aria-label="Full skill percentage"><span class="score-hard" data-skill-hard="63" title="Half">0</span><span data-skill-extreme="63" title="Fifth">0</span></span></div></div></div></section>
+  <section class="lower-grid">
+    <div class="weapons"><h2 class="section-title">Weapons</h2>
+      <div class="weapon-head"><span>Weapon</span><span>Regular</span><span>Hard</span><span>Extreme</span><span>Damage</span><span>Range</span><span>Attacks</span><span>Ammo</span><span>Malf.</span></div>
+      <div id="weaponRows"><div class="weapon-row"><label class="weapon-cell"><span class="weapon-label">Weapon</span><input value="Unarmed"></label><label class="weapon-cell"><span class="weapon-label">Regular</span><input value="25"></label><label class="weapon-cell"><span class="weapon-label">Hard</span><input value="12"></label><label class="weapon-cell"><span class="weapon-label">Extreme</span><input value="5"></label><label class="weapon-cell"><span class="weapon-label">Damage</span><input value="1d3 + db"></label><label class="weapon-cell"><span class="weapon-label">Range</span><input value="-"></label><label class="weapon-cell"><span class="weapon-label">Attacks</span><input value="1"></label><label class="weapon-cell"><span class="weapon-label">Ammo</span><input value="-"></label><label class="weapon-cell"><span class="weapon-label">Malf.</span><input value="-"></label></div><div class="weapon-row"><label class="weapon-cell"><span class="weapon-label">Weapon</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Regular</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Hard</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Extreme</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Damage</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Range</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Attacks</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Ammo</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Malf.</span><input value=""></label></div><div class="weapon-row"><label class="weapon-cell"><span class="weapon-label">Weapon</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Regular</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Hard</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Extreme</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Damage</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Range</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Attacks</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Ammo</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Malf.</span><input value=""></label></div><div class="weapon-row"><label class="weapon-cell"><span class="weapon-label">Weapon</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Regular</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Hard</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Extreme</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Damage</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Range</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Attacks</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Ammo</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Malf.</span><input value=""></label></div><div class="weapon-row"><label class="weapon-cell"><span class="weapon-label">Weapon</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Regular</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Hard</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Extreme</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Damage</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Range</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Attacks</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Ammo</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Malf.</span><input value=""></label></div><div class="weapon-row"><label class="weapon-cell"><span class="weapon-label">Weapon</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Regular</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Hard</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Extreme</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Damage</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Range</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Attacks</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Ammo</span><input value=""></label><label class="weapon-cell"><span class="weapon-label">Malf.</span><input value=""></label></div></div>
+    </div>
+    <div class="combat"><h2 class="section-title">Combat</h2>
+      <label class="combat-row">Damage Bonus <input data-field="damageBonus" type="text"></label>
+      <label class="combat-row">Build <input data-field="build" type="text"></label>
+      <label class="combat-row dodge">Dodge <input data-field="dodge" type="text"></label>
+    </div>
+  </section>
+</div></main></div>
+<aside class="dice-rail" id="diceTray" aria-label="Call of Cthulhu dice roller">
+  <div class="dice-rail-head"><span class="dice-overline">INVESTIGATOR'S FIELD KIT</span><h2>Dice &amp; Rolls <span aria-hidden="true">✦</span></h2><p>Tap a die to roll. Percentile rolls follow Call of Cthulhu 7th Edition.</p></div>
+  <div class="dice-tiles"><button class="dice-tile" type="button" data-roll-die="100" aria-label="Roll d100: Skills, Luck, SAN, characteristics">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,5 50,15 58,31 50,49 32,59 14,49 6,31 14,15"/><path d="M14 15 32 25 50 15M6 31 32 25 58 31M14 49 32 25 50 49M32 25V59"/></g><text x="32" y="38" text-anchor="middle">%</text></svg>
+ <span class="die-copy"><b>D100</b><span>Percentile checks</span><small>Skills, Luck, SAN, characteristics</small></span></button><button class="dice-tile" type="button" data-roll-die="10" aria-label="Roll d10: Weapon dice; bonus dice use d100">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,4 54,28 46,48 32,60 18,48 10,28"/><path d="M32 4V60M10 28h44M18 48 32 28 46 48"/></g><text x="32" y="38" text-anchor="middle">10</text></svg>
+ <span class="die-copy"><b>D10</b><span>Tens / damage</span><small>Weapon dice; bonus dice use d100</small></span></button><button class="dice-tile" type="button" data-roll-die="3" aria-label="Roll d3: Unarmed, improvised damage">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,7 59,53 5,53"/><path d="m32 7 0 46M5 53 32 33 59 53"/></g><text x="32" y="38" text-anchor="middle">3</text></svg>
+ <span class="die-copy"><b>D3</b><span>Small damage</span><small>Unarmed, improvised damage</small></span></button><button class="dice-tile" type="button" data-roll-die="4" aria-label="Roll d4: Minor weapons and effects">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,5 60,54 4,54"/><path d="M32 5V54M4 54 32 33 60 54"/></g><text x="32" y="38" text-anchor="middle">4</text></svg>
+ <span class="die-copy"><b>D4</b><span>Light damage</span><small>Minor weapons and effects</small></span></button><button class="dice-tile" type="button" data-roll-die="6" aria-label="Roll d6: Damage, Sanity loss, creation">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="11,11 53,11 53,53 11,53"/><path d="M11 22 32 11 53 22M11 43 32 53 53 43"/></g><text x="32" y="38" text-anchor="middle">6</text></svg>
+ <span class="die-copy"><b>D6</b><span>Common roll</span><small>Damage, Sanity loss, creation</small></span></button><button class="dice-tile" type="button" data-roll-die="8" aria-label="Roll d8: Larger weapons and threats">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,3 58,32 32,61 6,32"/><path d="M32 3V61M6 32H58M6 32 32 18 58 32"/></g><text x="32" y="38" text-anchor="middle">8</text></svg>
+ <span class="die-copy"><b>D8</b><span>Heavy damage</span><small>Larger weapons and threats</small></span></button><button class="dice-tile" type="button" data-roll-die="12" aria-label="Roll d12: Uncommon Keeper-directed rolls">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,4 53,15 61,39 43,58 20,58 3,39 11,15"/><path d="M11 15 32 25 53 15M3 39 32 25 61 39M20 58 32 25 43 58"/></g><text x="32" y="38" text-anchor="middle">12</text></svg>
+ <span class="die-copy"><b>D12</b><span>Special dice</span><small>Uncommon Keeper-directed rolls</small></span></button><button class="dice-tile" type="button" data-roll-die="20" aria-label="Roll d20: Uncommon Keeper-directed rolls">
+ <svg class="die-icon" viewBox="0 0 64 64" aria-hidden="true"><g class="die-art"><polygon points="32,3 57,18 57,46 32,61 7,46 7,18"/><path d="M7 18 32 32 57 18M7 46 32 32 57 46M32 3V61M7 18 32 3 57 18"/></g><text x="32" y="38" text-anchor="middle">20</text></svg>
+ <span class="die-copy"><b>D20</b><span>Special dice</span><small>Uncommon Keeper-directed rolls</small></span></button></div>
+  <section class="dice-settings" aria-label="Dice options">
+   <label for="rollTarget">D100 — Roll against</label>
+   <select id="rollTarget" aria-label="Skill or attribute to test"><option value="none">Unopposed (just roll d100)</option></select>
+   <label for="rollAdvantage">Bonus / penalty tens dice</label>
+   <select id="rollAdvantage">
+     <option value="0">Normal roll</option><option value="-1">1 bonus die</option><option value="-2">2 bonus dice</option>
+     <option value="1">1 penalty die</option><option value="2">2 penalty dice</option>
+   </select>
+   <div class="dice-settings-rule"></div>
+   <div class="dice-quick-controls">
+    <label>Dice count <input type="number" min="1" max="20" value="1" id="diceQuantity" inputmode="numeric"></label>
+    <label>Plus / minus <input type="number" min="-99" max="99" value="0" id="diceModifier" inputmode="numeric"></label>
+   </div>
+   <p class="dice-settings-note">Count and modifier apply to D3–D20 rolls. Bonus/penalty applies to D100 only.</p>
+  </section>
+  <section class="dice-result-panel" aria-label="Most recent dice roll">
+    <span class="dice-overline">LAST RESULT</span>
+    <div class="dice-result-number" id="diceLastNumber" aria-live="polite" aria-atomic="true">—</div>
+    <strong class="dice-result-title" id="diceLastTitle">Ready to roll</strong>
+    <p class="dice-result-detail" id="diceLastDetail">Choose a die above to begin.</p>
+  </section>
+  <section class="dice-history-panel" aria-label="Dice roll history">
+   <div class="dice-history-title"><b>Roll history</b><button type="button" id="clearDiceHistory">Clear</button></div>
+   <ol id="diceHistory"><li class="dice-history-empty">No rolls recorded yet.</li></ol>
+   <small>History is saved with each investigator and included in JSON backups.</small>
+  </section>
+  <a class="dice-back-link" href="#sheetTop">↑ Return to investigator sheet</a>
+</aside></div>
+<details class="notes-panel"><summary>Investigator Notes (editable / automatically saved)</summary>
+  <p>Keep clues, conditions, inventory, scenario notes, or anything else here.</p>
+  <textarea id="notes" placeholder="Notes for this investigator..."></textarea>
+</details>
+<p class="footnote">Unofficial editable tabletop aid, independently made for personal play. Not affiliated with Chaosium. Saves stay in the browser/device where you edit. Dice history is also saved per investigator. Use Download Backup to back up or transfer records. Open in Safari or Chrome, not an in-app code preview.</p>
+<script>
+/* =================================================================
+   STORAGE / PRESETS
+   Edit the SKILL_COLUMNS and default attributes below if desired.
+   Each entry: [skill name, initial percentage]. Empty names are custom slots.
+   Only blank/custom skill titles may be renamed. Scores remain editable.
+   ================================================================= */
+const STORAGE_KEY = 'investigator-records-v1'; // Retains all previous records
+const SKILL_COLUMNS = [
+ [ ['Accounting',5],['Anthropology',1],['Appraise',5],['Archaeology',1],['Art / Craft',5],['',0],['',0],['Charm',15],['Climb',20],['Computer Use',5],['Credit Rating',0],['Cthulhu Mythos',0],['Disguise',5],['Dodge (half DEX)',0],['Drive Auto',20],['',0] ],
+ [ ['Elec Repair',10],['Electronics',1],['Fast Talk',5],['Fighting (Brawl)',25],['',0],['',0],['Firearms (Handgun)',20],['Firearms (Rifle/Shotgun)',25],['',0],['First Aid',30],['History',5],['Intimidate',15],['Jump',20],['Language (Other)',1],['',0],['',0] ],
+ [ ['Language (Own) (EDU)',0],['Law',5],['Library Use',20],['Listen',25],['Locksmith',1],['Mech. Repair',10],['Medicine',1],['Natural World',10],['Navigate',10],['Occult',5],['Op. Hv. Machine',1],['Persuade',10],['Pilot',1],['',0],['Psychology',10],['Psychoanalysis',1] ],
+ [ ['Science',1],['',0],['',0],['Sleight of Hand',10],['Spot Hidden',25],['Stealth',20],['Survival',10],['Swim',20],['Throw',20],['Track',10],['',0],['',0],['',0],['',0],['',0],['',0] ]
+];
+const SKILL_PRESETS = SKILL_COLUMNS.flat();
+const FIELD_DEFAULTS = {
+ name:'',player:'',occupation:'',age:'',sex:'',residence:'',birthplace:'',
+ STR:50,CON:50,SIZ:50,DEX:50,APP:50,INT:50,POW:50,EDU:50,MOVE:8,
+ startingSanity:50,damageBonus:'0',build:'0',dodge:'25'
+};
+const TRACK_DEFAULTS = {
+ hp:{current:10,max:10},sanity:{current:50,max:99},
+ luck:{current:50,max:99},magic:{current:10,max:10}
+};
+const WEAPON_KEYS = ['name','regular','hard','extreme','damage','range','attacks','ammo','malf'];
+const WEAPON_LABELS = ['Weapon','Regular','Hard','Extreme','Damage','Range','Attacks','Ammo','Malf.'];
+const TRACK_LIMITS = {hp:200,sanity:99,luck:99,magic:200};
+const $ = id => document.getElementById(id);
+const clone = value => JSON.parse(JSON.stringify(value));
+const uid = () => 'i-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+const number = (value, fallback=0) => Number.isFinite(Number(value)) && value!=='' ? Number(value) : fallback;
+const clamp = (value,min,max) => Math.min(max,Math.max(min,Math.round(number(value,min))));
+const escapeHTML = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function makeProfile(){
+ const fields=clone(FIELD_DEFAULTS);
+ const skills=SKILL_PRESETS.map(([name,value])=>({name,value,checked:false}));
+ skills[13].value=Math.floor(fields.DEX/2); // Dodge begins at half DEX.
+ skills[32].value=fields.EDU; // Language (Own) begins at EDU.
+ const weapons=Array.from({length:6},(_,i)=>i===0
+   ? {name:'Unarmed',regular:'25',hard:'12',extreme:'5',damage:'1d3 + db',range:'-',attacks:'1',ammo:'-',malf:'-'}
+   : Object.fromEntries(WEAPON_KEYS.map(k=>[k,''])));
+ return {id:uid(),fields,trackers:clone(TRACK_DEFAULTS),conditions:{},skills,weapons,photo:'',notes:'',rollHistory:[]};
+}
+function normalizeProfile(p){
+ const base=makeProfile();
+ if(!p||typeof p!=='object')return base;
+ base.id=typeof p.id==='string'?p.id:uid();
+ for(const k of Object.keys(base.fields))if(p.fields&&p.fields[k]!==undefined)base.fields[k]=String(p.fields[k]);
+ for(const k of Object.keys(base.trackers)){
+  if(p.trackers&&p.trackers[k]){
+   base.trackers[k].max=clamp(p.trackers[k].max,0,TRACK_LIMITS[k]);
+   base.trackers[k].current=clamp(p.trackers[k].current,0,TRACK_LIMITS[k]);
+  }
+ }
+ for(const k of ['majorWound','unconscious','dying','tempInsane','indefInsane','insane'])base.conditions[k]=Boolean(p.conditions&&p.conditions[k]);
+ if(Array.isArray(p.skills))p.skills.slice(0,base.skills.length).forEach((s,i)=>{
+  if(!s||typeof s!=='object')return;
+  // Preprinted skill names cannot be overwritten by old saves or imported files.
+  base.skills[i].name=SKILL_PRESETS[i][0] || String(s.name??'').slice(0,100);
+  base.skills[i].value=clamp(s.value,0,999);
+  base.skills[i].checked=Boolean(s.checked);
+ });
+ if(Array.isArray(p.weapons))p.weapons.slice(0,base.weapons.length).forEach((w,i)=>{
+  if(!w||typeof w!=='object')return;
+  for(const k of WEAPON_KEYS)base.weapons[i][k]=String(w[k]??'').slice(0,120);
+ });
+ base.photo=typeof p.photo==='string'?p.photo:'';
+ base.notes=typeof p.notes==='string'?p.notes:'';
+ base.rollHistory=Array.isArray(p.rollHistory)?p.rollHistory.slice(0,25).filter(x=>x&&typeof x==='object').map(x=>({dice:String(x.dice??'').slice(0,100),result:String(x.result??'').slice(0,100),detail:String(x.detail??'').slice(0,500),grade:String(x.grade??'').slice(0,24),title:String(x.title??'').slice(0,100),time:String(x.time??'').slice(0,50)})):[];
+ return base;
+}
+function loadStore(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(saved && Array.isArray(saved.profiles) && saved.profiles.length){
+   const profiles=saved.profiles.map(normalizeProfile);
+   return {profiles,activeId:profiles.some(p=>p.id===saved.activeId)?saved.activeId:profiles[0].id};
+  }
+ }catch(e){console.warn('Could not restore saves:',e)}
+ const first=makeProfile();return {profiles:[first],activeId:first.id};
+}
+let store=loadStore();
+let active=()=>store.profiles.find(p=>p.id===store.activeId)||store.profiles[0];
+let saveTimer;
+function saveNow(){
+ clearTimeout(saveTimer);
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(store));$('saveStatus').className='success';$('saveStatus').textContent='✓ Saved on this device';}
+ catch(e){$('saveStatus').className='error';$('saveStatus').textContent='⚠ Browser storage blocked/full. Use Export JSON and open in Safari or Chrome.';console.warn(e)}
+}
+function queueSave(){ $('saveStatus').className='';$('saveStatus').textContent='Saving…';clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,250); }
+function renderProfilePicker(){
+ $('profileSelect').replaceChildren(...store.profiles.map((p,i)=>{
+  const o=document.createElement('option');o.value=p.id;o.textContent=p.fields.name.trim()||`Investigator ${i+1}`;return o;
+ }));
+ $('profileSelect').value=store.activeId;
+}
+function renderAttributes(){
+ const groups=[['STR','CON','SIZ'],['DEX','APP','INT'],['POW','EDU','MOVE']];
+ // Column-major order to visually match the reference's 3 x 3 characteristics.
+ const order=Array.from({length:3},(_,r)=>groups.map(col=>col[r])).flat();
+ $('attributes').innerHTML=order.map(key=>key==='MOVE'
+   ? `<label class="attribute attr-move">Move<br>Rate <span class="attr-box"><input type="number" data-field="MOVE" min="0" max="99" aria-label="Move Rate"></span></label>`
+   : `<label class="attribute">${key}<span class="attr-box"><input type="number" data-field="${key}" min="0" max="999" aria-label="${key}"><span class="attr-derived"><span data-derived="${key}-hard"></span><span data-derived="${key}-extreme"></span></span></span></label>`
+ ).join('');
+}
+function updateDerived(){
+ const f=active().fields;
+ for(const key of ['STR','CON','SIZ','DEX','APP','INT','POW','EDU']){
+  const val=clamp(f[key],0,999);
+  document.querySelector(`[data-derived="${key}-hard"]`).textContent=Math.floor(val/2);
+  document.querySelector(`[data-derived="${key}-extreme"]`).textContent=Math.floor(val/5);
+ }
+}
+function printedBase(i){
+ if(i===13)return clamp(Math.floor(number(active().fields.DEX,50)/2),0,999);
+ if(i===32)return clamp(active().fields.EDU,0,999);
+ return SKILL_PRESETS[i][1];
+}
+function updatePrintedBases(){
+ document.querySelectorAll('[data-skill-base]').forEach(el=>{
+  const i=Number(el.dataset.skillBase);
+  el.textContent=`(${String(printedBase(i)).padStart(2,'0')}%)`;
+ });
+}
+function renderSkills(){
+ const p=active(),grid=$('skillsGrid');
+ grid.replaceChildren();
+ SKILL_COLUMNS.forEach((col,colIndex)=>{
+  const container=document.createElement('div');container.className='skill-column';
+  col.forEach((_,rowIndex)=>{
+   const i=colIndex*16+rowIndex,s=p.skills[i],fixedName=SKILL_PRESETS[i][0];
+   const row=document.createElement('div');row.className='skill-row';
+   const title=fixedName
+    ? `<span class="skill-fixed">${escapeHTML(fixedName)} <span class="skill-base" data-skill-base="${i}">(${String(printedBase(i)).padStart(2,'0')}%)</span></span>`
+    : `<input class="skill-name" type="text" data-skill-name="${i}" aria-label="Custom skill name" value="${escapeHTML(s.name)}" placeholder="Custom skill">`;
+   const val=clamp(s.value,0,999);
+   row.innerHTML=`<input type="checkbox" data-skill-check="${i}" aria-label="Mark ${escapeHTML(fixedName||s.name||'custom skill')} for improvement" ${s.checked?'checked':''}>
+     ${title}
+     <span class="skill-scores"><input type="number" min="0" max="999" data-skill-value="${i}" value="${val}" title="Full skill percentage" aria-label="${escapeHTML(fixedName||s.name||'Custom skill')} full percentage">
+     <span class="score-hard" data-skill-hard="${i}" title="Half">${Math.floor(val/2)}</span>
+     <span data-skill-extreme="${i}" title="Fifth">${Math.floor(val/5)}</span></span>`;
+   container.append(row);
+  });grid.append(container);
+ });
+}
+function renderWeapons(){
+ $('weaponRows').innerHTML=active().weapons.map((w,i)=>`<div class="weapon-row">${WEAPON_KEYS.map((key,n)=>
+ `<label class="weapon-cell"><span class="weapon-label">${WEAPON_LABELS[n]}</span><input type="text" data-weapon-index="${i}" data-weapon-field="${key}" value="${escapeHTML(w[key])}" aria-label="Weapon ${i+1}, ${WEAPON_LABELS[n]}"></label>`).join('')}</div>`).join('');
+}
+function renderTrackers(){
+ const p=active();
+ for(const [key,data] of Object.entries(p.trackers)){
+  const section=document.querySelector(`[data-track="${key}"]`);
+  section.querySelector('[data-max]').value=data.max;
+  const container=section.querySelector('.number-grid');
+  const count=key==='sanity'||key==='luck'?99:Math.max(key==='hp'?20:24,data.max,data.current);
+  const fragment=document.createDocumentFragment();
+  for(let n=0;n<=count;n++){
+   const button=document.createElement('button');button.type='button';button.dataset.point=n;
+   button.textContent=String(n).padStart(2,'0');button.title=`Set ${key} to ${n}`;
+   button.setAttribute('aria-label',`${key} ${n}`);
+   if(n===data.current){button.className='selected';button.setAttribute('aria-pressed','true')}
+   else button.setAttribute('aria-pressed','false');
+   fragment.append(button);
+  }
+  container.replaceChildren(fragment);
+  section.querySelector('.current-label').textContent=data.current;
+ }
+}
+function updatePortrait(){
+ const image=$('portraitImg'),src=active().photo;
+ $('portrait').classList.toggle('has-image',Boolean(src));
+ if(src){image.src=src}else{image.removeAttribute('src')}
+ $('photoURL').value=src.startsWith('data:')?'':src;
+}
+function renderAll(){
+ const p=active();renderProfilePicker();
+ document.querySelectorAll('[data-field]').forEach(input=>{input.value=p.fields[input.dataset.field]??''});
+ document.querySelectorAll('[data-condition]').forEach(input=>{input.checked=Boolean(p.conditions[input.dataset.condition])});
+ renderSkills();renderWeapons();renderTrackers();updateDerived();updatePrintedBases();updatePortrait();$('notes').value=p.notes;
+ renderRollTargets();renderDiceHistory();
+}
+renderAttributes();renderAll();saveNow();
+// Input delegation: updating a field never destroys focus or cursor position.
+document.addEventListener('input',event=>{
+ const t=event.target,p=active();
+ if(t.matches('[data-field]')){
+  const key=t.dataset.field,old=p.fields[key];p.fields[key]=t.value;
+  if(key==='name')renderProfilePicker();
+  if(key==='DEX'||key==='EDU')updatePrintedBases();
+  // Update automatic base skills only if their values were not manually changed.
+  if(key==='DEX'){
+   const oldBase=Math.floor(number(old)/2),newBase=Math.floor(number(t.value)/2);
+   if(number(p.skills[13].value)===oldBase){p.skills[13].value=newBase;document.querySelector('[data-skill-value="13"]').value=newBase;
+    document.querySelector('[data-skill-hard="13"]').textContent=Math.floor(newBase/2);document.querySelector('[data-skill-extreme="13"]').textContent=Math.floor(newBase/5)}
+   if(String(p.fields.dodge)===String(oldBase)){p.fields.dodge=String(newBase);document.querySelector('[data-field="dodge"]').value=newBase}
+  }
+  if(key==='EDU' && number(p.skills[32].value)===number(old)){
+   const v=clamp(t.value,0,999);p.skills[32].value=v;document.querySelector('[data-skill-value="32"]').value=v;
+   document.querySelector('[data-skill-hard="32"]').textContent=Math.floor(v/2);document.querySelector('[data-skill-extreme="32"]').textContent=Math.floor(v/5);
+  }
+  if(['STR','CON','SIZ','DEX','APP','INT','POW','EDU'].includes(key))updateDerived();
+ }else if(t.matches('[data-skill-name]')){
+  const i=Number(t.dataset.skillName);
+  if(SKILL_PRESETS[i][0])return; // Never change printed skill titles.
+  p.skills[i].name=t.value;
+ }else if(t.matches('[data-skill-value]')){
+  const i=+t.dataset.skillValue; p.skills[i].value=t.value;
+  document.querySelector(`[data-skill-hard="${i}"]`).textContent=Math.floor(clamp(t.value,0,999)/2);
+  document.querySelector(`[data-skill-extreme="${i}"]`).textContent=Math.floor(clamp(t.value,0,999)/5);
+ }else if(t.matches('[data-weapon-index]')){
+  p.weapons[+t.dataset.weaponIndex][t.dataset.weaponField]=t.value;
+ }else if(t.id==='notes')p.notes=t.value;
+ else return;
+ if(t.matches('[data-field],[data-skill-value],[data-skill-name]'))renderRollTargets();
+ queueSave();
+});
+document.addEventListener('change',event=>{
+ const t=event.target,p=active();
+ if(t.matches('[data-condition]'))p.conditions[t.dataset.condition]=t.checked;
+ else if(t.matches('[data-skill-check]'))p.skills[+t.dataset.skillCheck].checked=t.checked;
+ else if(t.matches('[data-max]')){
+  const key=t.dataset.max;p.trackers[key].max=clamp(t.value,0,TRACK_LIMITS[key]);
+  renderTrackers();
+ }else return;
+ queueSave();
+});
+document.querySelector('.tracker-grid').addEventListener('click',event=>{
+ const button=event.target.closest('button[data-point]');if(!button)return;
+ const key=button.closest('[data-track]').dataset.track;
+ const data=active().trackers[key];data.current=+button.dataset.point;
+ const group=button.parentElement;
+ const previous=group.querySelector('.selected');
+ if(previous){previous.classList.remove('selected');previous.setAttribute('aria-pressed','false')}
+ button.classList.add('selected');button.setAttribute('aria-pressed','true');
+ button.closest('.tracker').querySelector('.current-label').textContent=data.current;
+ queueSave();
+});
+$('saveBtn').addEventListener('click',()=>{saveNow()});
+$('printBtn').addEventListener('click',()=>window.print());
+$('profileSelect').addEventListener('change',e=>{store.activeId=e.target.value;renderAll();saveNow()});
+$('addProfile').addEventListener('click',()=>{
+ const p=makeProfile();store.profiles.push(p);store.activeId=p.id;renderAll();saveNow();
+ document.querySelector('[data-field="name"]').focus();
+});
+$('copyProfile').addEventListener('click',()=>{
+ const p=normalizeProfile(clone(active()));p.id=uid();p.fields.name=(p.fields.name||'Investigator')+' (copy)';
+ store.profiles.push(p);store.activeId=p.id;renderAll();saveNow();
+});
+$('deleteProfile').addEventListener('click',()=>{
+ if(!confirm('Delete this investigator? Export a backup first if needed.'))return;
+ store.profiles=store.profiles.filter(p=>p.id!==store.activeId);
+ if(!store.profiles.length)store.profiles.push(makeProfile());
+ store.activeId=store.profiles[0].id;renderAll();saveNow();
+});
+function download(filename,content,mime){
+ const blob=new Blob([content],{type:mime});const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1200);
+}
+$('exportBtn').addEventListener('click',()=>{
+ saveNow();download('investigator-records-backup.json',JSON.stringify({version:1,...store},null,2),'application/json');
+});
+$('importFile').addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const parsed=JSON.parse(await file.text());
+  const incoming=Array.isArray(parsed.profiles)?parsed.profiles:(parsed.fields?[parsed]:null);
+  if(!incoming||!incoming.length)throw Error('This is not an investigator JSON backup.');
+  const ids=new Set(store.profiles.map(p=>p.id));
+  const imported=incoming.map(p=>{const n=normalizeProfile(p);if(ids.has(n.id))n.id=uid();ids.add(n.id);return n});
+  store.profiles.push(...imported);store.activeId=imported[0].id;renderAll();saveNow();
+  alert(`Imported ${imported.length} investigator(s). Existing records were kept.`);
+ }catch(err){alert('Import failed: '+err.message)}
+ e.target.value='';
+});
+function openPhotoPicker(){$('photoFile').click()}
+$('portrait').addEventListener('click',openPhotoPicker);
+$('portrait').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPhotoPicker()}});
+$('photoFile').addEventListener('change',e=>{
+ const file=e.target.files && e.target.files[0];
+ if(!file)return;
+ e.target.value=''; // Lets the same photo be picked again later.
+ if(file.type && !file.type.startsWith('image/')){alert('Please select an image.');return}
+ const targetId=active().id;
+ const reader=new FileReader();
+ reader.onerror=()=>alert('Could not open this picture. Try JPEG, PNG or WebP.');
+ reader.onload=()=>{
+  const img=new Image();
+  img.onerror=()=>alert('This image format could not be decoded. Please try a JPEG or PNG.');
+  img.onload=()=>{
+   try{
+    // Compress uploads so multiple portraits fit in local browser storage.
+    const ratio=Math.min(1,720/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));
+    canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw Error('Picture processing unavailable');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    const jpeg=canvas.toDataURL('image/jpeg',0.72);
+    const profile=store.profiles.find(p=>p.id===targetId);
+    if(!profile)return;
+    profile.photo=jpeg;
+    if(active().id===targetId)updatePortrait();
+    saveNow();
+   }catch(err){alert('Image upload failed: '+err.message)}
+  };
+  img.src=reader.result;
+ };
+ reader.readAsDataURL(file);
+});
+$('applyPhoto').addEventListener('click',()=>{
+ const url=$('photoURL').value.trim();
+ if(url && !/^https:\/\//i.test(url)){alert('Please use a direct HTTPS image URL.');return}
+ active().photo=url;updatePortrait();saveNow();
+});
+$('removePhoto').addEventListener('click',()=>{active().photo='';updatePortrait();saveNow()});
+
+/* ==============================================================
+   DICE ROLLER — CoC 7th-edition percentile rules and ordinary dice
+   - A d100 is one units die and one or more tens dice.
+   - 00 + 0 counts as 100, except when another tens die is better.
+   - 01 critical; fumble 96–100 if skill <50, otherwise 100.
+   - Skill success uses Regular <= full, Hard <= floor(full/2),
+     Extreme <= floor(full/5). A pushed roll is Keeper-adjudicated.
+   ============================================================== */
+function secureDie(sides){
+ if(window.crypto && typeof window.crypto.getRandomValues==='function'){
+  const buf=new Uint32Array(1),range=4294967296,cutoff=Math.floor(range/sides)*sides;
+  do{window.crypto.getRandomValues(buf)}while(buf[0]>=cutoff);
+  return buf[0]%sides+1;
+ }
+ return Math.floor(Math.random()*sides)+1;
+}
+function percentileFrom(tens,unit){const n=tens*10+unit;return n===0?100:n}
+function percentileGrade(roll,target){
+ if(roll===1)return ['Critical success','critical'];
+ if(roll===100 || (target<50&&roll>=96))return ['Fumble','fumble'];
+ if(roll<=Math.floor(target/5))return ['Extreme success','extreme'];
+ if(roll<=Math.floor(target/2))return ['Hard success','hard'];
+ if(roll<=target)return ['Regular success','regular'];
+ return ['Failure','fail'];
+}
+function getRollTarget(){
+ const key=$('rollTarget').value,p=active();
+ if(key.startsWith('skill:')){
+  const i=Number(key.slice(6));if(!Number.isInteger(i)||!p.skills[i])return null;
+  const label=SKILL_PRESETS[i][0]||p.skills[i].name||'Custom skill';
+  return {value:clamp(p.skills[i].value,0,999),label};
+ }
+ if(key.startsWith('attr:')){
+  const name=key.slice(5);if(!Object.hasOwn(p.fields,name))return null;
+  return {value:clamp(p.fields[name],0,999),label:name};
+ }
+ if(key==='track:luck'||key==='track:sanity'){
+  const name=key.slice(6);return {value:p.trackers[name].current,label:name==='luck'?'Luck':'Sanity'};
+ }
+ return null;
+}
+function renderRollTargets(){
+ const selector=$('rollTarget'),previous=selector.value,p=active();
+ const groups=[{name:'— Percentile —',items:[['none','Raw D100 (no target)'],['track:luck',`Luck (${p.trackers.luck.current}%)`],['track:sanity',`Sanity (${p.trackers.sanity.current}%)`]]},
+  {name:'— Characteristics —',items:['STR','CON','SIZ','DEX','APP','INT','POW','EDU'].map(k=>[`attr:${k}`,`${k} (${p.fields[k]}%)`])},
+  {name:'— Skills —',items:p.skills.map((s,i)=>[ `skill:${i}`,`${SKILL_PRESETS[i][0]||s.name||'Custom skill'} (${s.value}%)` ]).filter((_,i)=>SKILL_PRESETS[i][0]||p.skills[i].name.trim())}];
+ selector.replaceChildren();
+ groups.forEach(g=>{const optgroup=document.createElement('optgroup');optgroup.label=g.name;
+  g.items.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;optgroup.append(option)});selector.append(optgroup);
+ });
+ selector.value=Array.from(selector.options).some(o=>o.value===previous)?previous:'none';
+}
+function renderDiceHistory(){
+ const list=$('diceHistory');list.replaceChildren();
+ const rolls=active().rollHistory||[];
+ const latest=rolls[0];
+ $('diceLastNumber').textContent=latest?latest.result:'—';
+ $('diceLastTitle').textContent=latest?(latest.title||latest.dice+' rolled'):'Ready to roll';
+ $('diceLastDetail').textContent=latest?latest.detail:'Choose a die above to begin.';
+ document.querySelector('.dice-result-panel').dataset.grade=latest?latest.grade||'':'';
+ if(!rolls.length){const empty=document.createElement('li');empty.className='dice-history-empty';empty.textContent='No rolls recorded yet.';list.append(empty);return}
+ rolls.forEach(entry=>{
+  const item=document.createElement('li'),headline=document.createElement('strong'),details=document.createElement('span');
+  headline.textContent=`${entry.dice}: ${entry.result}`;
+  details.textContent=` — ${entry.detail}`;
+  item.append(headline,details);list.append(item);
+ });
+}
+function recordRoll(record){
+ const p=active();p.rollHistory??=[];p.rollHistory.unshift({dice:record.dice,result:String(record.result),detail:record.detail,grade:record.grade,title:record.title,time:new Date().toISOString()});
+ if(p.rollHistory.length>25)p.rollHistory.length=25;
+ $('diceLastNumber').textContent=String(record.result);
+ $('diceLastTitle').textContent=record.title;
+ $('diceLastDetail').textContent=record.detail;
+ document.querySelector('.dice-result-panel').dataset.grade=record.grade||'';
+ renderDiceHistory();queueSave();
+}
+function rollPercentile(){
+ const mod=clamp($('rollAdvantage').value,-2,2);
+ const unit=secureDie(10)-1;
+ const tens=Array.from({length:1+Math.abs(mod)},()=>secureDie(10)-1);
+ const candidates=tens.map(t=>percentileFrom(t,unit));
+ const roll=mod<0?Math.min(...candidates):mod>0?Math.max(...candidates):candidates[0];
+ const target=getRollTarget();
+ const grade=target?percentileGrade(roll,target.value):null;
+ const extra=tens.length>1?` · Tens ${tens.map(x=>String(x*10).padStart(2,'0')).join(' / ')}, units ${unit}`:` · Tens ${String(tens[0]*10).padStart(2,'0')}, units ${unit}`;
+ const mode=mod<0?` · ${-mod} bonus`:mod>0?` · ${mod} penalty`:'';
+ const threshold=target?` · R/H/E ${target.value}/${Math.floor(target.value/2)}/${Math.floor(target.value/5)}`:'';
+ recordRoll({dice:'D100'+mode,result:roll===100?'100':String(roll).padStart(2,'0'),
+  title:grade?`${grade[0]}!`:'Percentile roll',grade:grade?grade[1]:'',
+  detail:(target?`${target.label} ${target.value}%${threshold} · ${grade[0]}`:'Raw percentile')+extra});
+}
+function rollOrdinary(sides){
+ const count=clamp($('diceQuantity').value,1,20),flat=clamp($('diceModifier').value,-99,99);
+ $('diceQuantity').value=count;$('diceModifier').value=flat;
+ const dice=Array.from({length:count},()=>sides===3?Math.ceil(secureDie(6)/2):secureDie(sides));
+ const sum=dice.reduce((a,b)=>a+b,0)+flat;
+ const expression=`${count}d${sides}${flat>0?`+${flat}`:flat<0?flat:''}`;
+ recordRoll({dice:expression,result:sum,title:`${expression} rolled`,grade:'',detail:`Dice: ${dice.join(' + ')}${flat?` ${flat>=0?'+':'−'} ${Math.abs(flat)}`:''}`});
+}
+document.querySelectorAll('[data-roll-die]').forEach(button=>button.addEventListener('click',()=>{
+ const sides=Number(button.dataset.rollDie);
+ if(sides===100)rollPercentile();else rollOrdinary(sides);
+}));
+$('clearDiceHistory').addEventListener('click',()=>{
+ active().rollHistory=[];renderDiceHistory();
+ $('diceLastNumber').textContent='—';$('diceLastTitle').textContent='History cleared';$('diceLastDetail').textContent='Choose another die to roll.';
+ document.querySelector('.dice-result-panel').dataset.grade='';saveNow();
+});
+
+</script>
+</body>
+</html>
